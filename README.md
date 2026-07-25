@@ -168,15 +168,28 @@ users touch this.
   starting point, not clinically reviewed
 - Replace `static/core/icons/icon.svg` with real brand assets
 - Localize the crisis hotline text/number for your actual user base
-- `voice_bot/pipeline.py` now runs the **real** Deepgram → Claude →
-  ElevenLabs pipeline (not a stub) — verified live: the bot joins a real
-  Daily room, both STT and TTS connect successfully, and the pipeline
-  shuts down cleanly on hangup or cancellation. **Not yet verified**: an
-  actual spoken back-and-forth (needs a human on a real call, which this
-  environment can't simulate) and the real-time crisis-keyword safety
-  processor, which is still Phase 3 — the current pipeline has no safety
-  layer between STT and the LLM yet. Don't treat "Start Call" as
-  user-facing until both of those are done.
+- `voice_bot/pipeline.py` runs the **real** Deepgram → Claude → ElevenLabs
+  pipeline (not a stub) — verified live: the bot joins a real Daily room,
+  both STT and TTS connect successfully, and the pipeline shuts down
+  cleanly on hangup or cancellation. **Not yet verified**: an actual
+  spoken back-and-forth (needs a human on a real call, which this
+  environment can't simulate). Don't treat "Start Call" as user-facing
+  until that's done.
+- `CrisisGuardProcessor` (`voice_bot/pipeline.py`) sits between STT and the
+  LLM context aggregator and reuses `companion.risk_rules.contains_crisis_keyword`
+  — the exact same check the text check-in flow uses, not a second copy.
+  On a match it broadcasts an interruption, speaks
+  `settings.CRISIS_SCRIPTED_RESPONSE` directly, and swallows that turn's
+  `TranscriptionFrame` so the LLM never composes its own response to a
+  crisis phrase; the call continues afterward. Verified against a minimal
+  Pipecat pipeline (frame-level, no live call): a crisis phrase never
+  reaches the LLM stage and the scripted `TTSSpeakFrame` fires instead; a
+  normal phrase passes through untouched. `crisis_detected` is read once
+  at call end and sent to the completion webhook as `crisis_detected_live`,
+  which forces `risk_level="high"` via `apply_safety_floor`'s
+  `force_crisis` param — **not yet verified on an actual call** (saying a
+  real crisis phrase out loud mid-conversation and confirming the scripted
+  line plays and the resulting check-in shows the crisis block).
 - `voice_bot/pipeline.py` carries a documented monkeypatch
   (`_patch_deepgram_language_bug`) for a real bug in `pipecat-ai` 0.0.108:
   `DeepgramSTTService` stringifies its `language` setting as literally

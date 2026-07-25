@@ -1,9 +1,9 @@
 """Standalone service that runs the live-call pipeline for Recovery Pulse.
 
-PHASE 2: runs the real Pipecat pipeline (voice_bot/pipeline.py) — Deepgram
-STT, Claude LLM, ElevenLabs TTS, real barge-in. Still no safety processor
-(Phase 3) — CrisisGuardProcessor lands between STT and the LLM context
-aggregator once this real conversation path is proven solid.
+Runs the real Pipecat pipeline (voice_bot/pipeline.py) — Deepgram STT, Claude
+LLM, ElevenLabs TTS, real barge-in, and CrisisGuardProcessor as a
+deterministic, LLM-independent crisis-keyword check between STT and the LLM
+context aggregator.
 
 Bootstraps Django settings on startup so this process can import the exact
 same safety-critical code the main app uses — companion.risk_rules,
