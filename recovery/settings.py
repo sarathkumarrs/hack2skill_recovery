@@ -125,7 +125,11 @@ LOGOUT_REDIRECT_URL = "login"
 # Recovery Pulse — third-party service config (all via environment, never committed)
 
 ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
-ANTHROPIC_MODEL = env("ANTHROPIC_MODEL", default="claude-opus-5")
+# claude-haiku-4-5, not Opus — measured live: Opus 5 averages ~6s for this
+# short classification+generation call even with thinking disabled, vs
+# Haiku's ~2.7s. Neither hits the PRD's <2s NFR outright, but Haiku is the
+# closest and is also ~5x cheaper for a task this simple. See companion/ai_engine.py.
+ANTHROPIC_MODEL = env("ANTHROPIC_MODEL", default="claude-haiku-4-5")
 
 # ElevenLabs (text-to-speech for the AI companion's message) — companion/tts.py
 # Voice default is "Sarah" (mature/reassuring) — a free-tier API key can only use

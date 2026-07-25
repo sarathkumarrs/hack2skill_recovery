@@ -84,6 +84,13 @@ def assess_checkin(
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_content}],
             output_format=CompanionAssessment,
+            # Deliberately no `thinking`/`output_config.effort` here: those are
+            # Opus-5-era params (needed there to counteract its always-on
+            # thinking) and `effort` actively errors on Haiku 4.5. Haiku runs
+            # without thinking by default, which is exactly the fast, no-tuning
+            # behavior this short classification+generation call wants — if
+            # ANTHROPIC_MODEL is ever pointed back at an Opus/Sonnet model,
+            # revisit this.
         )
     except anthropic.APIConnectionError as exc:
         # Must be caught before APIError — APIConnectionError is a subclass of it.

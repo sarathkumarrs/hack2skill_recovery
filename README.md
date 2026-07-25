@@ -36,8 +36,9 @@ with explicit consent. Full product spec in [`PRD.pdf`](PRD.pdf).
 - **Database**: SQLite (deliberate choice for this MVP's scale — see
   [`DEPLOY.md`](DEPLOY.md) before deploying anywhere with an ephemeral
   filesystem)
-- **AI**: Anthropic Claude API (`claude-opus-5`) for the companion's
-  reasoning; ElevenLabs API for text-to-speech
+- **AI**: Anthropic Claude API (`claude-haiku-4-5` — measured live: ~2.7s
+  average for this call vs Opus 5's ~6s, and ~5x cheaper for a task this
+  simple) for the companion's reasoning; ElevenLabs API for text-to-speech
 - **Auth**: Django's built-in auth (email/password); Google login
   deliberately deferred
 - **Push**: Web Push via VAPID (`pywebpush`), not Firebase
@@ -120,9 +121,11 @@ users touch this.
 
 ## Before real users touch this
 
-- Get a real `ANTHROPIC_API_KEY` and manually time a check-in round trip —
-  the PRD's non-functional requirement is under 2 seconds and hasn't been
-  measured against a live key yet
+- The check-in round trip has been measured live at ~2.3–3.6s on
+  `claude-haiku-4-5` (vs. Opus 5's ~6s+) — closest available to the PRD's
+  <2s target, but not fully there. If that last margin matters, look at
+  streaming the response instead of waiting for the full message, or
+  Fast Mode if you move back to an Opus-tier model
 - Review the crisis-keyword list in `companion/risk_rules.py` — it's a
   starting point, not clinically reviewed
 - Replace `static/core/icons/icon.svg` with real brand assets
