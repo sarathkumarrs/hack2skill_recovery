@@ -1,0 +1,41 @@
+{% extends "core/base.html" %}
+{% block title %}Log in · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-brand-700 text-center mb-1">Recovery Pulse</h1>
+    <p class="text-slate-600 text-center mb-6">Welcome back</p>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="rounded-lg bg-red-50 text-red-700 text-sm p-3">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+      {% for field in form %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">
+            {{ field.label }}
+          </label>
+          {{ field }}
+          {% for error in field.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <button type="submit"
+        class="w-full rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 text-lg">
+        Log in
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-slate-600">
+      New here?
+      <a href="{% url 'signup' %}" class="text-brand-700 font-medium">Create an account</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

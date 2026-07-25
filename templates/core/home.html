@@ -1,0 +1,54 @@
+{% extends "core/base.html" %}
+{% block title %}Home · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col p-6">
+  <header class="flex items-center justify-between mb-8">
+    <h1 class="text-xl font-bold text-brand-700">Recovery Pulse</h1>
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="text-sm text-slate-500 underline">Log out</button>
+    </form>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center justify-center gap-10 text-center">
+    <h2 class="text-2xl font-semibold text-slate-800">How are you feeling today?</h2>
+
+    <div class="grid grid-cols-2 gap-4 w-full max-w-xs" id="mood-buttons">
+      <button type="button" data-mood="good" aria-label="Feeling good"
+        class="mood-btn flex flex-col items-center justify-center gap-1 rounded-2xl bg-white shadow-sm border border-slate-200 py-6 text-4xl hover:bg-brand-50 active:scale-95 transition">
+        <span aria-hidden="true">😊</span>
+        <span class="text-sm font-medium text-slate-600">Feeling Good</span>
+      </button>
+      <button type="button" data-mood="okay" aria-label="Okay"
+        class="mood-btn flex flex-col items-center justify-center gap-1 rounded-2xl bg-white shadow-sm border border-slate-200 py-6 text-4xl hover:bg-brand-50 active:scale-95 transition">
+        <span aria-hidden="true">😐</span>
+        <span class="text-sm font-medium text-slate-600">Okay</span>
+      </button>
+      <button type="button" data-mood="struggling" aria-label="Struggling"
+        class="mood-btn flex flex-col items-center justify-center gap-1 rounded-2xl bg-white shadow-sm border border-slate-200 py-6 text-4xl hover:bg-brand-50 active:scale-95 transition">
+        <span aria-hidden="true">😞</span>
+        <span class="text-sm font-medium text-slate-600">Struggling</span>
+      </button>
+      <button type="button" data-mood="craving" aria-label="Craving"
+        class="mood-btn flex flex-col items-center justify-center gap-1 rounded-2xl bg-white shadow-sm border border-slate-200 py-6 text-4xl hover:bg-brand-50 active:scale-95 transition">
+        <span aria-hidden="true">😣</span>
+        <span class="text-sm font-medium text-slate-600">Craving</span>
+      </button>
+    </div>
+
+    <div class="w-full max-w-xs border-t border-slate-200"></div>
+
+    <button type="button" id="mic-button" aria-label="Hold to talk"
+      class="flex items-center gap-2 rounded-full bg-brand-700 text-white px-6 py-4 text-lg font-semibold shadow-md active:scale-95 transition select-none">
+      <span aria-hidden="true">🎤</span> Hold to Talk
+    </button>
+
+    <p class="text-lg font-medium text-amber-600" id="streak-display">
+      🔥 <span id="streak-count">0</span> Day Streak
+    </p>
+  </main>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<!-- checkin.js (emoji tap + hold-to-talk wiring) lands in Phase 2 -->
+{% endblock %}

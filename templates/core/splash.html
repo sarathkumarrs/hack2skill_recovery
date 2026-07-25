@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+{% block title %}Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center p-6 text-center gap-8">
+  <div>
+    <h1 class="text-4xl font-bold text-brand-700">Recovery Pulse</h1>
+    <p class="mt-2 text-slate-600">One tap. One voice message. Immediate support.</p>
+  </div>
+  <div class="w-full max-w-xs flex flex-col gap-3">
+    <a href="{% url 'login' %}"
+       class="w-full rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 text-lg">
+      Log in
+    </a>
+    <a href="{% url 'signup' %}"
+       class="w-full rounded-xl border border-brand-600 text-brand-700 font-semibold py-3 text-lg">
+      Sign up
+    </a>
+  </div>
+</div>
+{% endblock %}

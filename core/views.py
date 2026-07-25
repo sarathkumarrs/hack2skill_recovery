@@ -1,10 +1,25 @@
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 
-def placeholder(request):
-    """Phase 0 sanity-check view — replaced by the real Splash/Home views in Phase 1."""
-    return render(request, "core/placeholder.html")
+def splash(request):
+    """Entry point: real users go straight to Home / login, per the PRD's
+    Splash → Home flow — no need to make an authenticated user look at
+    branding every visit."""
+    if request.user.is_authenticated:
+        return redirect("home")
+    return render(request, "core/splash.html")
+
+
+@login_required
+def home(request):
+    """Home screen: greeting, emoji check-in buttons, mic button, streak.
+
+    Emoji/mic wiring to the real check-in endpoint lands in Phase 2;
+    streak is a static placeholder until Phase 3.
+    """
+    return render(request, "core/home.html")
 
 
 def manifest(request):
