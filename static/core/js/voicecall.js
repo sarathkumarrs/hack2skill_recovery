@@ -65,6 +65,12 @@
         });
     }
 
+    function cleanupAudioElements() {
+      document.querySelectorAll("audio[data-daily-track]").forEach(function (el) {
+        el.remove();
+      });
+    }
+
     function endCall() {
       if (leaving) return;
       leaving = true;
@@ -73,6 +79,7 @@
       if (callFrame) {
         callFrame.leave().catch(function () {});
       }
+      cleanupAudioElements();
       pollStatus(20);
     }
 
@@ -106,7 +113,10 @@
         })
         .then(function (data) {
           sessionId = data.session_id;
-          callFrame = DailyIframe.createCallObject();
+          // videoSource: false prevents the camera permission prompt
+          // entirely — this is an audio-only call, and startVideoOff alone
+          // still asks for camera access before muting it.
+          callFrame = DailyIframe.createCallObject({ videoSource: false });
 
           callFrame.on("joined-meeting", function () {
             setStatus("Connected — say hello");
@@ -116,6 +126,25 @@
           });
           callFrame.on("error", function () {
             setStatus("Call connection error.");
+          });
+          // A headless call object (no iframe) renders nothing for you —
+          // it hands over raw tracks and expects the app to play them.
+          // Without this, the bot's audio never reaches the speakers even
+          // though the call itself connects fine.
+          callFrame.on("track-started", function (event) {
+            if (event.track.kind !== "audio" || (event.participant && event.participant.local)) {
+              return;
+            }
+            var audioEl = document.createElement("audio");
+            audioEl.autoplay = true;
+            audioEl.srcObject = new MediaStream([event.track]);
+            audioEl.dataset.dailyTrack = event.track.id;
+            document.body.appendChild(audioEl);
+          });
+          callFrame.on("track-stopped", function (event) {
+            if (!event.track) return;
+            var audioEl = document.querySelector('audio[data-daily-track="' + event.track.id + '"]');
+            if (audioEl) audioEl.remove();
           });
 
           return callFrame.join({ url: data.room_url, token: data.user_token });
