@@ -1,10 +1,9 @@
 """Standalone service that runs the live-call pipeline for Recovery Pulse.
 
-PHASE 1 STUB: this does not actually join the Daily room or run any real
-audio pipeline yet. It proves the Django <-> voice_bot <-> Django round trip
-(the start-bot call in, the completion webhook out) before Pipecat/Daily/
-Deepgram complexity is added in a later phase. Replace _run_stub_call with
-the real Pipecat pipeline (voice_bot/pipeline.py) when that's built.
+PHASE 2: runs the real Pipecat pipeline (voice_bot/pipeline.py) — Deepgram
+STT, Claude LLM, ElevenLabs TTS, real barge-in. Still no safety processor
+(Phase 3) — CrisisGuardProcessor lands between STT and the LLM context
+aggregator once this real conversation path is proven solid.
 
 Bootstraps Django settings on startup so this process can import the exact
 same safety-critical code the main app uses — companion.risk_rules,
@@ -37,6 +36,8 @@ from django.conf import settings  # noqa: E402
 from fastapi import FastAPI, Header, HTTPException  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
+from voice_bot.pipeline import run_call  # noqa: E402
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voice_bot")
 
@@ -67,26 +68,21 @@ async def start_bot(
 ):
     _check_secret(x_voice_service_secret)
     logger.info("Starting bot for session %s in room %s", payload.session_id, payload.room_url)
-    # Fire-and-forget: this endpoint returns immediately, matching how the
-    # real pipeline behaves too — Django doesn't wait synchronously for a
-    # call to finish.
-    asyncio.create_task(_run_stub_call(payload.session_id))
+    # Fire-and-forget: this endpoint returns immediately — Django doesn't
+    # wait synchronously for a call to finish.
+    asyncio.create_task(_run_and_report(payload.session_id, payload.room_url, payload.bot_token, payload.context))
     return {"status": "started"}
 
 
-async def _run_stub_call(session_id: int) -> None:
-    """PHASE 1 STUB — simulates a short call, then posts a fake transcript
-    to Django's completion webhook."""
-    await asyncio.sleep(3)
+async def _run_and_report(session_id: int, room_url: str, bot_token: str, context: dict) -> None:
+    async def on_complete(transcript: str, crisis_detected_live: bool) -> None:
+        await asyncio.to_thread(_post_completion, session_id, transcript, crisis_detected_live)
 
-    fake_transcript = (
-        "User: Hey, I'm doing okay today, just wanted to check in.\n"
-        "Assistant: That's great to hear. What's been helping you stay steady?\n"
-        "User: Mostly just sticking to my routine and calling my sponsor.\n"
-        "Assistant: That's a solid plan. Keep it up."
-    )
-
-    await asyncio.to_thread(_post_completion, session_id, fake_transcript, False)
+    try:
+        await run_call(room_url, bot_token, context, on_complete)
+    except Exception:
+        logger.exception("Call pipeline failed for session %s", session_id)
+        await asyncio.to_thread(_post_completion, session_id, "", False)
 
 
 def _post_completion(session_id: int, transcript: str, crisis_detected_live: bool) -> None:
@@ -100,7 +96,7 @@ def _post_completion(session_id: int, transcript: str, crisis_detected_live: boo
                     "session_id": session_id,
                     "transcript": transcript,
                     "crisis_detected_live": crisis_detected_live,
-                    "ended_reason": "stub_complete",
+                    "ended_reason": "call_ended",
                 },
                 timeout=10,
             )

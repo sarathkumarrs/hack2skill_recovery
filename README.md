@@ -168,9 +168,25 @@ users touch this.
   starting point, not clinically reviewed
 - Replace `static/core/icons/icon.svg` with real brand assets
 - Localize the crisis hotline text/number for your actual user base
-- `voice_bot/main.py` is currently a **stub** — it proves the Django ↔
-  voice_bot ↔ Django round trip (real Daily room, real webhook, real
-  `MoodCheckIn`/`CompanionResponse`) but doesn't yet run the real Pipecat
-  pipeline (Deepgram STT → Claude → ElevenLabs TTS) or the real-time
-  crisis-keyword safety processor. No real conversation happens on a call
-  yet — replace `_run_stub_call` before this is user-facing.
+- `voice_bot/pipeline.py` now runs the **real** Deepgram → Claude →
+  ElevenLabs pipeline (not a stub) — verified live: the bot joins a real
+  Daily room, both STT and TTS connect successfully, and the pipeline
+  shuts down cleanly on hangup or cancellation. **Not yet verified**: an
+  actual spoken back-and-forth (needs a human on a real call, which this
+  environment can't simulate) and the real-time crisis-keyword safety
+  processor, which is still Phase 3 — the current pipeline has no safety
+  layer between STT and the LLM yet. Don't treat "Start Call" as
+  user-facing until both of those are done.
+- `voice_bot/pipeline.py` carries a documented monkeypatch
+  (`_patch_deepgram_language_bug`) for a real bug in `pipecat-ai` 0.0.108:
+  `DeepgramSTTService` stringifies its `language` setting as literally
+  `"Language.EN"` instead of `"en"`, which Deepgram's API rejects outright
+  — every STT connection failed and retried forever until this was fixed.
+  Safe to delete once a newer `pipecat-ai` ships a real fix.
+- A hard/abrupt transport disconnect (observed by deliberately deleting a
+  Daily room mid-call during testing) can leave a `VoiceCallSession` stuck
+  in `active` with the completion webhook never firing — a normal hangup
+  (`on_participant_left`) and the max-duration watchdog both end cleanly,
+  this is specifically the "infrastructure died out from under the bot"
+  case. This is exactly what the plan's Phase 4 stale-session sweep
+  command is for; it isn't built yet.

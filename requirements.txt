@@ -9,3 +9,4 @@ requests>=2.31
 # Live voice call (voice_bot/) — standalone service, same venv as Django
 fastapi>=0.115
 uvicorn>=0.32
+pipecat-ai[daily,deepgram,anthropic,elevenlabs,silero]>=0.0.100
