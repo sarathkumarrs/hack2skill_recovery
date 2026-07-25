@@ -129,6 +129,23 @@ python manage.py send_daily_checkin_reminders
 - **App Platform**: an App Platform "Job" component (scheduled), running the
   same command, alongside the web service component.
 
+## Stale voice call sweep
+
+`sweep_stale_voice_calls` is the same kind of polling command — it marks
+any `VoiceCallSession` still `pending`/`active` well past
+`MAX_CALL_DURATION_SECONDS` as `failed`. Needed because a crashed
+`voice_bot` process (or an abrupt Daily transport disconnect) can leave a
+session stuck, which otherwise hangs the browser's post-hangup status poll
+indefinitely instead of showing the "couldn't be completed" fallback. Run
+it every few minutes:
+
+```sh
+python manage.py sweep_stale_voice_calls
+```
+
+- **Droplet**: a cron entry or systemd timer (same as the reminder job).
+- **App Platform**: another scheduled "Job" component.
+
 ## Before real users touch this
 
 - [ ] Pick Option A or B above and wire up the real database config
@@ -149,5 +166,8 @@ python manage.py send_daily_checkin_reminders
       closed (a clean error, not a hang) if not, but still worth checking
 - [ ] Place a real end-to-end test call, including deliberately saying a
       crisis phrase mid-call, to confirm the scripted safety override fires
-      correctly (see the plan's Phase 3 verification notes once the real
-      Pipecat pipeline replaces the current stub `voice_bot/main.py`)
+      correctly and the resulting check-in shows `risk_level="high"` — the
+      pipeline and its `CrisisGuardProcessor` are real, but this exact
+      spoken-call scenario hasn't been verified live yet (see README)
+- [ ] Schedule `sweep_stale_voice_calls` (above) — without it, a crashed
+      `voice_bot` process leaves stuck sessions and hanging status polls

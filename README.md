@@ -149,6 +149,18 @@ summary-vs-full-transcript split).
 python manage.py send_daily_checkin_reminders
 ```
 
+### Stale voice call sweep
+
+`sweep_stale_voice_calls` is the same kind of polling command (run it every
+few minutes via cron/systemd — see `DEPLOY.md`) — it marks any
+`VoiceCallSession` stuck `pending`/`active` well past
+`MAX_CALL_DURATION_SECONDS` as `failed`, for when `voice_bot` crashes or a
+Daily room disconnects abruptly mid-call:
+
+```sh
+python manage.py sweep_stale_voice_calls
+```
+
 ## Deployment
 
 See [`DEPLOY.md`](DEPLOY.md) — in particular, **do not deploy this as-is to
@@ -201,5 +213,8 @@ users touch this.
   in `active` with the completion webhook never firing — a normal hangup
   (`on_participant_left`) and the max-duration watchdog both end cleanly,
   this is specifically the "infrastructure died out from under the bot"
-  case. This is exactly what the plan's Phase 4 stale-session sweep
-  command is for; it isn't built yet.
+  case. `python manage.py sweep_stale_voice_calls` (run on a schedule —
+  see `DEPLOY.md`) cleans these up: any session still `pending`/`active`
+  more than `MAX_CALL_DURATION_SECONDS` + 5 minutes after it was created
+  gets marked `failed`, so the browser's status poll eventually shows the
+  fallback message instead of hanging forever.
