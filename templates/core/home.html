@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load static %}
 {% block title %}Home · Recovery Pulse{% endblock %}
 {% block content %}
 <div class="min-h-screen flex flex-col p-6">
@@ -46,9 +47,11 @@
     <p class="text-lg font-medium text-amber-600" id="streak-display">
       🔥 <span id="streak-count">0</span> Day Streak
     </p>
+
+    <p class="text-sm min-h-[1.25rem]" id="checkin-status" aria-live="polite"></p>
   </main>
 </div>
 {% endblock %}
 {% block extra_scripts %}
-<!-- checkin.js (emoji tap + hold-to-talk wiring) lands in Phase 2 -->
+<script src="{% static 'core/js/checkin.js' %}"></script>
 {% endblock %}

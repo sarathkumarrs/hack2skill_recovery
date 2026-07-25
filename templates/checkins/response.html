@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+{% block title %}Your check-in · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col p-6">
+  <header class="flex items-center justify-between mb-8">
+    <h1 class="text-xl font-bold text-brand-700">Recovery Pulse</h1>
+    <a href="{% url 'home' %}" class="text-sm text-slate-500 underline">Home</a>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center justify-center gap-6 text-center max-w-md mx-auto w-full">
+    {% if response %}
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 w-full">
+        <p class="text-lg text-slate-800 leading-relaxed">{{ response.message }}</p>
+      </div>
+
+      {% if response.crisis_flag or response.risk_level == "high" %}
+        <div class="rounded-2xl bg-red-50 border border-red-300 p-5 w-full text-left" role="alert">
+          <p class="font-semibold text-red-800">Contact your support person immediately.</p>
+          <p class="mt-2 text-red-700">
+            If you're in crisis, you don't have to go through this alone:
+            <strong>{{ crisis_hotline_text }}</strong>.
+          </p>
+        </div>
+      {% else %}
+        <div class="rounded-xl bg-brand-50 border border-brand-200 p-4 w-full text-left">
+          <p class="text-sm font-medium text-brand-800">Suggested action</p>
+          <p class="text-slate-700 mt-1">{{ response.suggested_action }}</p>
+        </div>
+      {% endif %}
+
+      <p class="text-xs text-slate-400">
+        Risk read: {{ response.get_risk_level_display }}
+      </p>
+
+      <!-- Caregiver linking/notifications land in Phase 5 -->
+      <button type="button" disabled
+        class="w-full max-w-xs rounded-xl border border-slate-300 text-slate-400 font-semibold py-3 cursor-not-allowed"
+        title="Add a caregiver to enable this (coming soon)">
+        Notify Caregiver
+      </button>
+    {% else %}
+      <p class="text-slate-600">Your check-in was saved, but no response is available.</p>
+    {% endif %}
+
+    <a href="{% url 'home' %}"
+       class="mt-4 text-brand-700 font-medium underline">Back to Home</a>
+  </main>
+</div>
+{% endblock %}
