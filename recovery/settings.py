@@ -21,6 +21,7 @@ SECRET_KEY = env(
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 
 # Application definition
@@ -135,3 +136,35 @@ CRISIS_HOTLINE_TEXT = env(
     "CRISIS_HOTLINE_TEXT", default="988 Suicide & Crisis Lifeline (call or text 988)"
 )
 CRISIS_HOTLINE_NUMBER = env("CRISIS_HOTLINE_NUMBER", default="988")
+
+
+# Production hardening — only when DEBUG is off. Behind a proxy (DigitalOcean
+# App Platform, etc.) that terminates TLS, Django itself sees plain HTTP, so
+# SECURE_PROXY_SSL_HEADER tells it to trust the proxy's X-Forwarded-Proto.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=60 * 60 * 24 * 7)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}

@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from .models import Profile
+
 User = get_user_model()
 
 
@@ -47,6 +49,18 @@ class SignupForm(UserCreationForm):
                 profile.timezone = tz
                 profile.save(update_fields=["timezone"])
         return user
+
+
+class ProfileSettingsForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ["display_name", "high_contrast_mode"]
+        widgets = {
+            "display_name": forms.TextInput(attrs={"class": TEXT_INPUT_CLASSES}),
+            "high_contrast_mode": forms.CheckboxInput(
+                attrs={"class": "h-5 w-5 rounded border-slate-300 text-brand-600"}
+            ),
+        }
 
 
 class EmailAuthenticationForm(AuthenticationForm):

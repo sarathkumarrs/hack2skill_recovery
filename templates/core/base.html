@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full{% if request.user.is_authenticated and request.user.profile.high_contrast_mode %} high-contrast{% endif %}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -21,6 +21,36 @@
       },
     }
   </script>
+  <style>
+    /* High-contrast mode (accounts.Profile.high_contrast_mode) — overrides
+       the small set of Tailwind utility classes used throughout the app
+       with a forced black/white/yellow palette. */
+    html.high-contrast body { background: #000 !important; color: #fff !important; }
+    html.high-contrast .bg-brand-50,
+    html.high-contrast .bg-brand-100,
+    html.high-contrast .bg-white { background: #000 !important; }
+    html.high-contrast .text-slate-800,
+    html.high-contrast .text-slate-700,
+    html.high-contrast .text-slate-600,
+    html.high-contrast .text-slate-500,
+    html.high-contrast .text-slate-400 { color: #fff !important; }
+    html.high-contrast .border-slate-200,
+    html.high-contrast .border-slate-300 { border-color: #fff !important; border-width: 2px !important; }
+    html.high-contrast .bg-brand-600,
+    html.high-contrast .bg-brand-700 { background: #ffeb3b !important; color: #000 !important; }
+    html.high-contrast .text-brand-700,
+    html.high-contrast .text-brand-800 { color: #ffeb3b !important; }
+    html.high-contrast .border-brand-200,
+    html.high-contrast .border-brand-600 { border-color: #ffeb3b !important; }
+    html.high-contrast .bg-red-50 { background: #000 !important; }
+    html.high-contrast .text-red-700,
+    html.high-contrast .text-red-800 { color: #ff5252 !important; }
+    html.high-contrast .border-red-200,
+    html.high-contrast .border-red-300 { border-color: #ff5252 !important; }
+    html.high-contrast .text-amber-600 { color: #ffeb3b !important; }
+    html.high-contrast .text-green-600 { color: #69f0ae !important; }
+    html.high-contrast a, html.high-contrast button { text-decoration: underline; }
+  </style>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full bg-brand-50 text-slate-900 antialiased">
