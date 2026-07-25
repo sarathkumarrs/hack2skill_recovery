@@ -31,3 +31,16 @@ class MoodCheckIn(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.mood} ({self.local_date})"
+
+
+class StreakRecord(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, related_name="streak", on_delete=models.CASCADE
+    )
+    current_streak = models.PositiveIntegerField(default=0)
+    longest_streak = models.PositiveIntegerField(default=0)
+    last_checkin_date = models.DateField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user} — {self.current_streak} day streak"

@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from companion.services import create_companion_response
 
 from .models import MoodCheckIn
-from .services import create_checkin
+from .services import create_checkin, update_streak
 
 VALID_MOODS = {choice for choice, _ in MoodCheckIn.Mood.choices}
 
@@ -49,6 +49,7 @@ def checkin_create(request):
         input_method=input_method,
         voice_transcript=voice_transcript,
     )
+    update_streak(request.user, checkin.local_date)
     create_companion_response(checkin)
 
     return JsonResponse(

@@ -85,10 +85,11 @@ def assess_checkin(
             messages=[{"role": "user", "content": user_content}],
             output_format=CompanionAssessment,
         )
+    except anthropic.APIConnectionError as exc:
+        # Must be caught before APIError — APIConnectionError is a subclass of it.
+        raise AIEngineError(f"Claude connection error: {exc}") from exc
     except anthropic.APIError as exc:
         raise AIEngineError(f"Claude API error: {exc}") from exc
-    except anthropic.APIConnectionError as exc:
-        raise AIEngineError(f"Claude connection error: {exc}") from exc
     except Exception as exc:  # noqa: BLE001 — any other SDK/parsing failure is still a fallback case
         raise AIEngineError(f"Unexpected error calling Claude: {exc}") from exc
 

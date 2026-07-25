@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from django.conf import settings
 
-from checkins.models import MoodCheckIn
+from checkins.models import MoodCheckIn, StreakRecord
+from checkins.services import consecutive_bad_days as compute_consecutive_bad_days
 
 from . import ai_engine, risk_rules
 from .ai_engine import AIEngineError
@@ -32,11 +33,9 @@ def _recent_mood_history(checkin: MoodCheckIn) -> list[str]:
 def create_companion_response(checkin: MoodCheckIn) -> CompanionResponse:
     mood_history = _recent_mood_history(checkin)
 
-    # Real streak + consecutive-bad-day tracking land in Phase 3 (StreakRecord).
-    # Until then, pass safe placeholder values — the safety floor's mood/keyword
-    # rules already apply in full; only the history-based floor is deferred.
-    streak = 0
-    consecutive_bad_days = 0
+    streak_record = StreakRecord.objects.filter(user=checkin.user).first()
+    streak = streak_record.current_streak if streak_record else 0
+    bad_days = compute_consecutive_bad_days(checkin.user, checkin.local_date)
 
     assessment = None
     error_occurred = False
@@ -56,7 +55,7 @@ def create_companion_response(checkin: MoodCheckIn) -> CompanionResponse:
         llm_assessment=assessment,
         mood=checkin.mood,
         voice_transcript=checkin.voice_transcript,
-        consecutive_bad_days=consecutive_bad_days,
+        consecutive_bad_days=bad_days,
     )
 
     if assessment is not None:

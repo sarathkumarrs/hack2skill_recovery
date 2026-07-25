@@ -2,6 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
+from checkins.models import StreakRecord
+
 
 def splash(request):
     """Entry point: real users go straight to Home / login, per the PRD's
@@ -14,12 +16,10 @@ def splash(request):
 
 @login_required
 def home(request):
-    """Home screen: greeting, emoji check-in buttons, mic button, streak.
-
-    Emoji/mic wiring to the real check-in endpoint lands in Phase 2;
-    streak is a static placeholder until Phase 3.
-    """
-    return render(request, "core/home.html")
+    """Home screen: greeting, emoji check-in buttons, mic button, streak."""
+    streak = StreakRecord.objects.filter(user=request.user).first()
+    current_streak = streak.current_streak if streak else 0
+    return render(request, "core/home.html", {"current_streak": current_streak})
 
 
 def manifest(request):
