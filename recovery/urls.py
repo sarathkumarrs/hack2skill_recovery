@@ -7,5 +7,6 @@ urlpatterns = [
     path("checkins/", include("checkins.urls")),
     path("notifications/", include("notifications.urls")),
     path("caregivers/", include("caregivers.urls")),
+    path("voicecalls/", include("voicecalls.urls")),
     path("", include("core.urls")),
 ]

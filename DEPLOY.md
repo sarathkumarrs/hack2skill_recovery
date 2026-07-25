@@ -43,11 +43,15 @@ your process manager's environment variables — never commit real values):
 | `ALLOWED_HOSTS` | Your real domain(s), comma-separated |
 | `CSRF_TRUSTED_ORIGINS` | e.g. `https://yourdomain.com` — required behind a proxy that terminates TLS |
 | `ANTHROPIC_API_KEY` | Real Claude API key — the AI companion silently falls back to the safety floor without one, so users get generic responses, not an error |
-| `ANTHROPIC_MODEL` | `claude-opus-5` (default) |
+| `ANTHROPIC_MODEL` | `claude-haiku-4-5` (default) — measured live at ~2.7s/call vs Opus 5's ~6s; see `companion/ai_engine.py` |
+| `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` / `ELEVENLABS_MODEL_ID` | Text-to-speech for the "Listen" button. Voice ID must come from your own account's `GET /v1/voices` — free-tier keys can't use every public-library voice |
 | `VAPID_PRIVATE_KEY` / `VAPID_PUBLIC_KEY` | Generate your own for production — do not reuse the dev keypair from local testing. See "Generating VAPID keys" below. |
 | `VAPID_CLAIMS_EMAIL` | `mailto:you@yourdomain.com` |
 | `CRISIS_HOTLINE_TEXT` / `CRISIS_HOTLINE_NUMBER` | Localize for your actual user base — the 988 US lifeline default is a placeholder, not a universal answer |
 | `SECURE_SSL_REDIRECT` | `True` once HTTPS is actually working end-to-end (default `True` when `DEBUG=False`) |
+| `DAILY_API_KEY` / `DEEPGRAM_API_KEY` | Live voice call — WebRTC transport (Daily) and streaming speech-to-text (Deepgram). See "Live voice call" below. |
+| `VOICE_SERVICE_URL` / `VOICE_SERVICE_SHARED_SECRET` / `DJANGO_BASE_URL` | How Django and the `voice_bot/` service reach each other — see "Live voice call" below |
+| `MAX_CALL_DURATION_SECONDS` / `CRISIS_SCRIPTED_RESPONSE` | Call length cap (default 600s) and the fixed crisis message the bot speaks when the real-time keyword monitor fires |
 
 ### Generating VAPID keys
 
@@ -78,6 +82,40 @@ python manage.py migrate
 gunicorn recovery.wsgi --bind 0.0.0.0:$PORT --workers 3   # see Procfile
 ```
 
+## Live voice call — a second, always-running process
+
+The "Start Call" feature (`voicecalls/` + `voice_bot/`) is **not** part of
+the Django web process — real-time audio can't live inside a normal request/
+response cycle. `voice_bot/` is a separate FastAPI service that must be
+running continuously alongside Django, in the same virtualenv (it calls
+`django.setup()` on startup to reuse `companion.risk_rules` and
+`companion.ai_engine.SYSTEM_PROMPT` directly — zero drift on the
+safety-critical logic).
+
+```sh
+uvicorn voice_bot.main:app --host 0.0.0.0 --port 7860   # see the `voice` line in Procfile
+```
+
+Django reaches this service via `VOICE_SERVICE_URL`; the service reaches
+Django's completion webhook via `DJANGO_BASE_URL`. Both directions are
+authenticated with the same `VOICE_SERVICE_SHARED_SECRET` (generate one,
+don't leave it blank in production — the webhook endpoint rejects requests
+without a valid secret).
+
+- **Droplet**: one more systemd unit (or one more process for `dokku`/
+  whatever process manager you're using) alongside gunicorn.
+- **App Platform**: a **second service component** (not a Job — this is
+  long-running, unlike the reminder command below), independently scaled/
+  billed, with its own `DAILY_API_KEY`/`DEEPGRAM_API_KEY`/
+  `VOICE_SERVICE_SHARED_SECRET` set on *that* component. Point the web
+  component's `VOICE_SERVICE_URL` at the voice component's internal
+  address (App Platform's service-to-service DNS), not a public URL —
+  getting this binding wrong is the most likely first-deploy bug here.
+
+Django itself never touches real-time audio and never writes to the
+database from the voice service's process — `voicecalls/` only ever talks
+to `voice_bot/` over plain HTTP, in both directions.
+
 ## Daily reminder job
 
 `send_daily_checkin_reminders` is a polling management command, not a
@@ -94,10 +132,9 @@ python manage.py send_daily_checkin_reminders
 ## Before real users touch this
 
 - [ ] Pick Option A or B above and wire up the real database config
-- [ ] Set a real `ANTHROPIC_API_KEY` and manually time a check-in → AI response
-      round trip — the PRD's non-functional requirement is under 2 seconds,
-      and this hasn't been measured against a live key yet (only the
-      safety-floor fallback path has been exercised in development)
+- [ ] Real check-in round trip measured live at ~2.3–3.6s on `claude-haiku-4-5`
+      (vs. Opus 5's ~6s+) — close to the PRD's <2s target but not fully
+      there; revisit if that last margin matters (see README)
 - [ ] Generate fresh production VAPID keys (don't reuse dev ones)
 - [ ] Review and localize the crisis-keyword list in `companion/risk_rules.py`
       and the crisis hotline text — both are starting points, not
@@ -106,3 +143,11 @@ python manage.py send_daily_checkin_reminders
 - [ ] Set up `db.sqlite3` backups if going with Option A (a Droplet's disk
       isn't backed up by default either — e.g. a cron job that copies the
       file to DO Spaces on a schedule)
+- [ ] Get real `DAILY_API_KEY` / `DEEPGRAM_API_KEY` and generate a real
+      `VOICE_SERVICE_SHARED_SECRET`; confirm `voice_bot/` is actually running
+      as its own long-lived process before "Start Call" goes live — it fails
+      closed (a clean error, not a hang) if not, but still worth checking
+- [ ] Place a real end-to-end test call, including deliberately saying a
+      crisis phrase mid-call, to confirm the scripted safety override fires
+      correctly (see the plan's Phase 3 verification notes once the real
+      Pipecat pipeline replaces the current stub `voice_bot/main.py`)

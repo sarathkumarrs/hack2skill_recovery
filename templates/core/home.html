@@ -1,6 +1,9 @@
 {% extends "core/base.html" %}
 {% load static %}
 {% block title %}Home · Recovery Pulse{% endblock %}
+{% block extra_head %}
+<script src="https://unpkg.com/@daily-co/daily-js"></script>
+{% endblock %}
 {% block content %}
 <div class="min-h-screen flex flex-col p-6">
   <header class="flex items-center justify-between mb-2">
@@ -45,9 +48,9 @@
 
     <div class="w-full max-w-xs border-t border-slate-200"></div>
 
-    <button type="button" id="mic-button" aria-label="Hold to talk"
-      class="flex items-center gap-2 rounded-full bg-brand-700 text-white px-6 py-4 text-lg font-semibold shadow-md active:scale-95 transition select-none">
-      <span aria-hidden="true">🎤</span> Hold to Talk
+    <button type="button" id="start-call-button" aria-label="Start a call with your recovery companion"
+      class="flex items-center gap-2 rounded-full bg-brand-700 text-white px-6 py-4 text-lg font-semibold shadow-md active:scale-95 transition">
+      <span aria-hidden="true">📞</span> Start Call
     </button>
 
     <p class="text-lg font-medium text-amber-600" id="streak-display">
@@ -57,7 +60,16 @@
     <p class="text-sm min-h-[1.25rem]" id="checkin-status" aria-live="polite"></p>
   </main>
 </div>
+
+<div id="call-panel" class="hidden fixed inset-0 bg-brand-900/95 text-white flex flex-col items-center justify-center gap-6 z-50 p-6 text-center">
+  <p id="call-status" aria-live="polite" class="text-lg">Connecting…</p>
+  <button type="button" id="hangup-button"
+    class="rounded-full bg-red-600 hover:bg-red-700 px-8 py-4 font-semibold">
+    End Call
+  </button>
+</div>
 {% endblock %}
 {% block extra_scripts %}
 <script src="{% static 'core/js/checkin.js' %}"></script>
+<script src="{% static 'core/js/voicecall.js' %}"></script>
 {% endblock %}

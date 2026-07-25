@@ -30,10 +30,14 @@ CRISIS_KEYWORDS = [
 ]
 
 
-def _keyword_hit(voice_transcript: str | None) -> bool:
-    if not voice_transcript:
+def contains_crisis_keyword(text: str | None) -> bool:
+    """Public entry point so other callers (e.g. the live-call safety
+    processor in voice_bot/) can reuse this exact check rather than
+    reimplementing it — the whole point of the safety floor is that there's
+    one place this logic lives."""
+    if not text:
         return False
-    lowered = voice_transcript.lower()
+    lowered = text.lower()
     return any(keyword in lowered for keyword in CRISIS_KEYWORDS)
 
 
@@ -46,25 +50,30 @@ def apply_safety_floor(
     mood: str,
     voice_transcript: str | None,
     consecutive_bad_days: int = 0,
+    force_crisis: bool = False,
 ) -> tuple[str, bool]:
     """Returns (final_risk_level, crisis_flag).
 
     Rule order:
+    0. force_crisis — an unconditional override, same shape as the keyword
+       rule but triggered by a caller that already knows a crisis occurred
+       (e.g. the live-call pipeline's real-time keyword monitor, which sees
+       the conversation as it happens rather than a transcript after the
+       fact). Checked first so it can never be "out-voted" by anything else.
     1. Keyword override — a crisis phrase in the transcript forces "high" and
        crisis_flag=True unconditionally, regardless of the LLM or any other
        rule. This only depends on local string matching, so it fires even if
        the Claude call never completes.
     2. Mood floor — "craving" floors the result at least "medium".
     3. History floor — 2+ consecutive struggling/craving days floors at
-       least "medium". (Wired up fully in Phase 3 once streak tracking
-       exists; Phase 2 always passes consecutive_bad_days=0.)
+       least "medium".
     4. LLM-unavailable fallback — if there's no LLM assessment at all, the
        result is at least "medium", never a silent "low".
     5. Otherwise, the final result is the LLM's own risk level raised to at
        least the floor computed above — the floor only ever raises the
        minimum, never lowers what the LLM said.
     """
-    if _keyword_hit(voice_transcript):
+    if force_crisis or contains_crisis_keyword(voice_transcript):
         return "high", True
 
     floor = "low"

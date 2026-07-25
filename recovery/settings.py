@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "companion",
     "caregivers",
     "notifications",
+    "voicecalls",
 ]
 
 MIDDLEWARE = [
@@ -149,6 +150,25 @@ CRISIS_HOTLINE_TEXT = env(
     "CRISIS_HOTLINE_TEXT", default="988 Suicide & Crisis Lifeline (call or text 988)"
 )
 CRISIS_HOTLINE_NUMBER = env("CRISIS_HOTLINE_NUMBER", default="988")
+
+# Live voice call (Pipecat) — voicecalls/ (this Django app) talks to the
+# standalone voice_bot/ service over HTTP; Django never runs the real-time
+# audio pipeline itself. See voice_bot/ and voicecalls/services.py.
+DAILY_API_KEY = env("DAILY_API_KEY", default="")
+DEEPGRAM_API_KEY = env("DEEPGRAM_API_KEY", default="")
+VOICE_SERVICE_URL = env("VOICE_SERVICE_URL", default="http://localhost:7860")
+VOICE_SERVICE_SHARED_SECRET = env("VOICE_SERVICE_SHARED_SECRET", default="")
+DJANGO_BASE_URL = env("DJANGO_BASE_URL", default="http://localhost:8000")
+MAX_CALL_DURATION_SECONDS = env.int("MAX_CALL_DURATION_SECONDS", default=600)
+CRISIS_SCRIPTED_RESPONSE = env(
+    "CRISIS_SCRIPTED_RESPONSE",
+    default=(
+        "I hear you, and I want you to know you don't have to go through this "
+        "alone. If you're in crisis, please reach out right now: 988 Suicide "
+        "& Crisis Lifeline, call or text 988. I'm going to stay on the line "
+        "with you."
+    ),
+)
 
 
 # Production hardening — only when DEBUG is off. Behind a proxy (DigitalOcean

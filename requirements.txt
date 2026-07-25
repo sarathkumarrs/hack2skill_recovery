@@ -5,3 +5,7 @@ pywebpush>=2.0
 whitenoise>=6.7
 gunicorn>=23.0
 requests>=2.31
+
+# Live voice call (voice_bot/) — standalone service, same venv as Django
+fastapi>=0.115
+uvicorn>=0.32

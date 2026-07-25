@@ -12,6 +12,7 @@ class MoodCheckIn(models.Model):
     class InputMethod(models.TextChoices):
         TAP = "tap", "Tap"
         VOICE = "voice", "Voice"
+        CALL = "call", "Call"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="mood_checkins", on_delete=models.CASCADE

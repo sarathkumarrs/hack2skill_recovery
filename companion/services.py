@@ -30,8 +30,26 @@ def _recent_mood_history(checkin: MoodCheckIn) -> list[str]:
     return [c.mood for c in reversed(previous)]
 
 
-def create_companion_response(checkin: MoodCheckIn) -> CompanionResponse:
+def create_companion_response(
+    checkin: MoodCheckIn,
+    assessment_transcript: str | None = None,
+    force_crisis: bool = False,
+) -> CompanionResponse:
+    """assessment_transcript lets a caller feed a *different* (typically
+    fuller) transcript into the AI assessment than what's stored on
+    checkin.voice_transcript — used by the live-call flow, which stores only
+    a short summary on the checkin but needs the full conversation transcript
+    for an accurate risk read. Defaults to checkin.voice_transcript, so the
+    normal tap/hold-to-talk callers are unaffected.
+
+    force_crisis lets a caller that already knows a crisis occurred (e.g. the
+    live call's real-time keyword monitor) guarantee the safety floor fires,
+    independent of what apply_safety_floor's own keyword scan finds in
+    whatever transcript ends up being passed."""
     mood_history = _recent_mood_history(checkin)
+    transcript_for_assessment = (
+        assessment_transcript if assessment_transcript is not None else checkin.voice_transcript
+    )
 
     streak_record = StreakRecord.objects.filter(user=checkin.user).first()
     streak = streak_record.current_streak if streak_record else 0
@@ -44,7 +62,7 @@ def create_companion_response(checkin: MoodCheckIn) -> CompanionResponse:
         assessment = ai_engine.assess_checkin(
             mood=checkin.mood,
             mood_history=mood_history,
-            voice_transcript=checkin.voice_transcript,
+            voice_transcript=transcript_for_assessment,
             streak=streak,
         )
     except AIEngineError as exc:
@@ -54,8 +72,9 @@ def create_companion_response(checkin: MoodCheckIn) -> CompanionResponse:
     risk_level, crisis_flag = risk_rules.apply_safety_floor(
         llm_assessment=assessment,
         mood=checkin.mood,
-        voice_transcript=checkin.voice_transcript,
+        voice_transcript=transcript_for_assessment,
         consecutive_bad_days=bad_days,
+        force_crisis=force_crisis,
     )
 
     if assessment is not None:

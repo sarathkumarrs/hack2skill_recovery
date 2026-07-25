@@ -108,3 +108,53 @@ def assess_checkin(
         raise AIEngineError("Claude response did not match the expected schema")
 
     return parsed
+
+
+SUMMARY_SYSTEM_PROMPT = """You summarize a recovery check-in phone call in one \
+short, neutral sentence for a personal wellness log. Do not add commentary, \
+advice, or judgment — just a factual recap of what was discussed. Do not \
+include the person's exact words if they described self-harm or suicidal \
+thoughts; refer to it only as "expressed distress" in that case."""
+
+
+def summarize_conversation(transcript: str) -> str:
+    """One short, neutral recap of a live call's full transcript — used only
+    to populate MoodCheckIn.voice_transcript for call check-ins, so the full
+    transcript itself never needs to be persisted anywhere. Kept as a
+    separate call (not a field on CompanionAssessment) so the well-tested
+    assess_checkin/CompanionAssessment path used by every other check-in
+    type stays completely untouched. Not latency-sensitive — the caller is
+    already on a "wrapping up" screen by the time this runs.
+
+    Raises AIEngineError on failure, same contract as assess_checkin.
+    """
+    if not settings.ANTHROPIC_API_KEY:
+        raise AIEngineError("ANTHROPIC_API_KEY is not configured")
+    if not transcript.strip():
+        return "A voice check-in call with no recorded conversation."
+
+    client = _get_client()
+
+    try:
+        response = client.messages.create(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=200,
+            system=SUMMARY_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": transcript}],
+        )
+    except anthropic.APIConnectionError as exc:
+        raise AIEngineError(f"Claude connection error: {exc}") from exc
+    except anthropic.APIError as exc:
+        raise AIEngineError(f"Claude API error: {exc}") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise AIEngineError(f"Unexpected error calling Claude: {exc}") from exc
+
+    if response.stop_reason == "refusal":
+        raise AIEngineError("Claude declined to summarize (safety refusal)")
+
+    text_blocks = [block.text for block in response.content if block.type == "text"]
+    summary = "".join(text_blocks).strip()
+    if not summary:
+        raise AIEngineError("Claude returned an empty summary")
+
+    return summary

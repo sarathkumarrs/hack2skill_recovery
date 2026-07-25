@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from companion.risk_rules import apply_safety_floor
+from companion.risk_rules import apply_safety_floor, contains_crisis_keyword
 from companion.schemas import CompanionAssessment
 
 
@@ -85,3 +85,42 @@ class ApplySafetyFloorTests(SimpleTestCase):
         )
         self.assertEqual(risk, "low")
         self.assertFalse(crisis)
+
+    def test_force_crisis_overrides_regardless_of_llm_or_transcript(self):
+        risk, crisis = apply_safety_floor(
+            llm_assessment=assessment("low"),
+            mood="good",
+            voice_transcript="Everything is fine, no concerning words here.",
+            force_crisis=True,
+        )
+        self.assertEqual(risk, "high")
+        self.assertTrue(crisis)
+
+    def test_force_crisis_fires_even_with_no_llm_assessment(self):
+        risk, crisis = apply_safety_floor(
+            llm_assessment=None, mood="good", voice_transcript=None, force_crisis=True
+        )
+        self.assertEqual(risk, "high")
+        self.assertTrue(crisis)
+
+    def test_no_force_crisis_and_no_keyword_does_not_trigger_high(self):
+        risk, crisis = apply_safety_floor(
+            llm_assessment=assessment("low"),
+            mood="good",
+            voice_transcript="Everything is fine.",
+            force_crisis=False,
+        )
+        self.assertEqual(risk, "low")
+        self.assertFalse(crisis)
+
+
+class ContainsCrisisKeywordTests(SimpleTestCase):
+    def test_matches_known_phrase_case_insensitively(self):
+        self.assertTrue(contains_crisis_keyword("I just want to GIVE UP today."))
+
+    def test_no_match_on_unrelated_text(self):
+        self.assertFalse(contains_crisis_keyword("I had a pretty good day."))
+
+    def test_none_and_empty_are_false(self):
+        self.assertFalse(contains_crisis_keyword(None))
+        self.assertFalse(contains_crisis_keyword(""))
