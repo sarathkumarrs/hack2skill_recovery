@@ -1,5 +1,8 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 
 from checkins.models import StreakRecord
@@ -23,7 +26,7 @@ def home(request):
 
 
 def manifest(request):
-    """Minimal PWA manifest. Icons/full offline behavior land in Phase 4."""
+    """PWA manifest — installable app metadata."""
     return JsonResponse(
         {
             "name": "Recovery Pulse",
@@ -32,6 +35,23 @@ def manifest(request):
             "display": "standalone",
             "background_color": "#f0fdfa",
             "theme_color": "#0f766e",
-            "icons": [],
+            "icons": [
+                {
+                    "src": "/static/core/icons/icon.svg",
+                    "sizes": "any",
+                    "type": "image/svg+xml",
+                    "purpose": "any",
+                }
+            ],
         }
     )
+
+
+_SERVICE_WORKER_PATH = Path(settings.BASE_DIR) / "static" / "core" / "js" / "sw.js"
+
+
+def service_worker(request):
+    """Serves sw.js at the root path (not /static/...) — required for Web
+    Push to have full-site scope rather than being confined to /static/."""
+    content = _SERVICE_WORKER_PATH.read_text()
+    return HttpResponse(content, content_type="application/javascript")

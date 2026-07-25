@@ -1,0 +1,45 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Notification settings · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col p-6">
+  <header class="flex items-center justify-between mb-8">
+    <h1 class="text-xl font-bold text-brand-700">Recovery Pulse</h1>
+    <a href="{% url 'home' %}" class="text-sm text-slate-500 underline">Home</a>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center gap-8 max-w-sm mx-auto w-full">
+    <h2 class="text-xl font-semibold text-slate-800">Daily check-in reminder</h2>
+
+    <form method="post" class="w-full space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">
+            {{ field.label }}
+          </label>
+          {{ field }}
+          {% for error in field.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <button type="submit"
+        class="w-full rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 text-lg">
+        Save
+      </button>
+    </form>
+
+    <div class="w-full border-t border-slate-200 pt-6">
+      <button type="button" id="enable-push-button" data-vapid-public-key="{{ vapid_public_key }}"
+        class="w-full rounded-xl border border-brand-600 text-brand-700 font-semibold py-3 text-lg">
+        Enable push notifications on this device
+      </button>
+      <p class="mt-2 text-sm text-slate-500" id="push-status" aria-live="polite"></p>
+    </div>
+  </main>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'core/js/push.js' %}"></script>
+{% endblock %}

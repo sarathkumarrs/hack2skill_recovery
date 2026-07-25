@@ -5,10 +5,13 @@
 <div class="min-h-screen flex flex-col p-6">
   <header class="flex items-center justify-between mb-8">
     <h1 class="text-xl font-bold text-brand-700">Recovery Pulse</h1>
-    <form method="post" action="{% url 'logout' %}">
-      {% csrf_token %}
-      <button type="submit" class="text-sm text-slate-500 underline">Log out</button>
-    </form>
+    <div class="flex items-center gap-4">
+      <a href="{% url 'notification_preferences' %}" class="text-sm text-slate-500 underline">Reminders</a>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-slate-500 underline">Log out</button>
+      </form>
+    </div>
   </header>
 
   <main class="flex-1 flex flex-col items-center justify-center gap-10 text-center">
