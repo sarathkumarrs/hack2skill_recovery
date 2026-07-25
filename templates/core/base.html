@@ -24,6 +24,17 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full bg-brand-50 text-slate-900 antialiased">
+  {% if messages %}
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 space-y-2">
+      {% for message in messages %}
+        <div class="rounded-lg px-4 py-3 text-sm shadow-sm
+          {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-brand-50 text-brand-800 border border-brand-200{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
   {% block content %}{% endblock %}
   {% block extra_scripts %}{% endblock %}
 </body>

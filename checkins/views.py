@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from caregivers.models import CaregiverLink
 from companion.services import create_companion_response
 
 from .models import MoodCheckIn
@@ -63,6 +64,9 @@ def checkin_response(request, checkin_id):
         MoodCheckIn, id=checkin_id, user=request.user
     )
     response = getattr(checkin, "companion_response", None)
+    has_active_caregiver = CaregiverLink.objects.filter(
+        patient=request.user, status=CaregiverLink.Status.ACTIVE
+    ).exists()
     return render(
         request,
         "checkins/response.html",
@@ -70,5 +74,6 @@ def checkin_response(request, checkin_id):
             "checkin": checkin,
             "response": response,
             "crisis_hotline_text": settings.CRISIS_HOTLINE_TEXT,
+            "has_active_caregiver": has_active_caregiver,
         },
     )

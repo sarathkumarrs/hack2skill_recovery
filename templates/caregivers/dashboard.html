@@ -1,0 +1,69 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Caregiver Dashboard · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col p-6">
+  <header class="flex items-center justify-between mb-8">
+    <h1 class="text-xl font-bold text-brand-700">Caregiver Dashboard</h1>
+    <a href="{% url 'home' %}" class="text-sm text-slate-500 underline">Home</a>
+  </header>
+  <form class="hidden">{% csrf_token %}</form>
+
+  <main class="flex-1 flex flex-col gap-4 max-w-md mx-auto w-full">
+    {% if not patients %}
+      <p class="text-slate-600 text-center mt-12">
+        No one has added you as a caregiver yet. Share your own invite link with
+        someone from your Home screen if you'd like them to see your check-ins.
+      </p>
+    {% endif %}
+
+    {% for patient in patients %}
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-slate-800">{{ patient.display_name }}</h2>
+          <span class="text-3xl" aria-hidden="true">{{ patient.mood_emoji }}</span>
+        </div>
+
+        {% if patient.latest_checkin %}
+          <dl class="mt-3 space-y-1 text-sm">
+            <div class="flex justify-between">
+              <dt class="text-slate-500">Today's mood</dt>
+              <dd class="font-medium text-slate-700">{{ patient.latest_checkin.get_mood_display }}</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-slate-500">Risk</dt>
+              <dd class="font-medium
+                {% if patient.latest_response.risk_level == 'high' %}text-red-600
+                {% elif patient.latest_response.risk_level == 'medium' %}text-amber-600
+                {% else %}text-green-600{% endif %}">
+                {{ patient.latest_response.get_risk_level_display|default:"—" }}
+              </dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-slate-500">Last check-in</dt>
+              <dd class="font-medium text-slate-700">{{ patient.latest_checkin.created_at|date:"g:i A" }}</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-slate-500">Recovery streak</dt>
+              <dd class="font-medium text-amber-600">🔥 {{ patient.current_streak }} days</dd>
+            </div>
+          </dl>
+        {% else %}
+          <p class="mt-3 text-sm text-slate-500">No check-ins yet.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    {% if patients %}
+      <button type="button" id="enable-push-button" data-vapid-public-key="{{ vapid_public_key }}"
+        class="mt-4 w-full rounded-xl border border-brand-600 text-brand-700 font-semibold py-3">
+        Get notified in real time on this device
+      </button>
+      <p class="text-sm text-slate-500" id="push-status" aria-live="polite"></p>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'core/js/push.js' %}"></script>
+{% endblock %}

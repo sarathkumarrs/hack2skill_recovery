@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+{% block title %}Invite a caregiver · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col p-6">
+  <header class="flex items-center justify-between mb-8">
+    <h1 class="text-xl font-bold text-brand-700">Recovery Pulse</h1>
+    <a href="{% url 'home' %}" class="text-sm text-slate-500 underline">Home</a>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center gap-6 max-w-sm mx-auto w-full text-center">
+    <h2 class="text-xl font-semibold text-slate-800">Invite a caregiver</h2>
+    <p class="text-slate-600">
+      Share this link with someone you trust. They'll be able to see your mood,
+      streak, and risk level — never full check-in details — and get notified
+      when you tap "Notify Caregiver."
+    </p>
+
+    <div class="w-full rounded-xl border border-slate-200 bg-white p-4 break-all text-sm text-slate-700"
+         id="invite-link">{{ invite_url }}</div>
+
+    <button type="button" id="copy-button"
+      class="w-full rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3">
+      Copy link
+    </button>
+    <p class="text-xs text-slate-400">This link expires {{ invite.expires_at|date:"M j, Y" }}.</p>
+  </main>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  document.getElementById("copy-button").addEventListener("click", function () {
+    var text = document.getElementById("invite-link").textContent.trim();
+    navigator.clipboard.writeText(text).then(function () {
+      var btn = document.getElementById("copy-button");
+      btn.textContent = "Copied!";
+      setTimeout(function () { btn.textContent = "Copy link"; }, 2000);
+    });
+  });
+</script>
+{% endblock %}

@@ -6,6 +6,8 @@
   <header class="flex items-center justify-between mb-8">
     <h1 class="text-xl font-bold text-brand-700">Recovery Pulse</h1>
     <div class="flex items-center gap-4">
+      <a href="{% url 'caregiver_invite' %}" class="text-sm text-slate-500 underline">Invite caregiver</a>
+      <a href="{% url 'caregiver_dashboard' %}" class="text-sm text-slate-500 underline">Caregiver view</a>
       <a href="{% url 'notification_preferences' %}" class="text-sm text-slate-500 underline">Reminders</a>
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}

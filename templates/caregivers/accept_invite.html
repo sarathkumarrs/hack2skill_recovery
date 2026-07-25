@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+{% block title %}Accept invite · Recovery Pulse{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-sm w-full text-center">
+    {% if invite %}
+      <h1 class="text-xl font-bold text-brand-700 mb-2">Recovery Pulse</h1>
+      <p class="text-slate-700 mb-6">
+        {{ invite.patient.profile.display_name|default:invite.patient.get_username }}
+        has invited you to be their caregiver. You'll be able to see their mood,
+        streak, and risk level, and get notified when they need support.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+          class="w-full rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 text-lg">
+          Accept invite
+        </button>
+      </form>
+    {% else %}
+      <h1 class="text-xl font-bold text-red-700 mb-2">Invite no longer valid</h1>
+      <p class="text-slate-600">This invite has expired or was already used.</p>
+      <a href="{% url 'home' %}" class="mt-4 inline-block text-brand-700 underline">Back to Home</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
