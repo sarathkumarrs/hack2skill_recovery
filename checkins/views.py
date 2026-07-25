@@ -2,12 +2,13 @@ import json
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from caregivers.models import CaregiverLink
+from companion import tts
 from companion.services import create_companion_response
 
 from .models import MoodCheckIn
@@ -77,3 +78,24 @@ def checkin_response(request, checkin_id):
             "has_active_caregiver": has_active_caregiver,
         },
     )
+
+
+@login_required
+def checkin_audio(request, checkin_id):
+    """Streams the AI companion's message as speech (ElevenLabs). Generated
+    on demand rather than cached/stored — each check-in is typically played
+    once, right after it's created, so persisting audio isn't worth the
+    storage plumbing at this scale."""
+    checkin = get_object_or_404(MoodCheckIn, id=checkin_id, user=request.user)
+    response = getattr(checkin, "companion_response", None)
+    if response is None or not response.message:
+        raise Http404
+
+    try:
+        chunks = tts.synthesize_speech_stream(response.message)
+    except tts.TTSError:
+        return JsonResponse({"error": "Voice playback isn't available right now."}, status=503)
+
+    http_response = StreamingHttpResponse(chunks, content_type="audio/mpeg")
+    http_response["Cache-Control"] = "private, max-age=3600"
+    return http_response

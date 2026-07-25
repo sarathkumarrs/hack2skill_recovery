@@ -14,6 +14,16 @@
         <p class="text-lg text-slate-800 leading-relaxed">{{ response.message }}</p>
       </div>
 
+      <div class="w-full max-w-xs">
+        <button type="button" id="listen-button"
+          data-audio-url="{% url 'checkin_audio' checkin.id %}"
+          class="w-full rounded-xl border border-brand-600 text-brand-700 font-semibold py-3">
+          🔊 Listen to this message
+        </button>
+        <audio id="response-audio" class="w-full mt-2 hidden" controls preload="none"></audio>
+        <p class="text-sm text-slate-500 mt-1 hidden" id="listen-status" aria-live="polite"></p>
+      </div>
+
       {% if response.crisis_flag or response.risk_level == "high" %}
         <div class="rounded-2xl bg-red-50 border border-red-300 p-5 w-full text-left" role="alert">
           <p class="font-semibold text-red-800">Contact your support person immediately.</p>
@@ -56,6 +66,39 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var btn = document.getElementById("listen-button");
+    if (!btn) return;
+    var audio = document.getElementById("response-audio");
+    var statusEl = document.getElementById("listen-status");
+    var loaded = false;
+
+    audio.addEventListener("canplay", function () {
+      btn.disabled = false;
+      btn.textContent = "🔊 Listen to this message";
+    });
+
+    audio.addEventListener("error", function () {
+      btn.classList.add("hidden");
+      audio.classList.add("hidden");
+      statusEl.classList.remove("hidden");
+      statusEl.textContent = "Voice playback isn't available right now.";
+    });
+
+    btn.addEventListener("click", function () {
+      if (!loaded) {
+        loaded = true;
+        btn.disabled = true;
+        btn.textContent = "Loading audio…";
+        audio.classList.remove("hidden");
+        audio.src = btn.dataset.audioUrl;
+        audio.load();
+      }
+      audio.play().catch(function () {});
+    });
+  });
+</script>
 {% if has_active_caregiver %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {

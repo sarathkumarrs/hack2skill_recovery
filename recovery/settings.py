@@ -127,6 +127,15 @@ LOGOUT_REDIRECT_URL = "login"
 ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
 ANTHROPIC_MODEL = env("ANTHROPIC_MODEL", default="claude-opus-5")
 
+# ElevenLabs (text-to-speech for the AI companion's message) — companion/tts.py
+# Voice default is "Sarah" (mature/reassuring) — a free-tier API key can only use
+# premade voices returned by GET /v1/voices for that account, not every voice in
+# ElevenLabs' public library (e.g. the commonly-referenced "Rachel" ID 404s/402s
+# on free tier). Check your own account's /v1/voices before assuming a voice ID works.
+ELEVENLABS_API_KEY = env("ELEVENLABS_API_KEY", default="")
+ELEVENLABS_VOICE_ID = env("ELEVENLABS_VOICE_ID", default="EXAVITQu4vr4xnSDxMaL")
+ELEVENLABS_MODEL_ID = env("ELEVENLABS_MODEL_ID", default="eleven_flash_v2_5")  # low-latency, fits the <2s NFR
+
 VAPID_PRIVATE_KEY = env("VAPID_PRIVATE_KEY", default="")
 VAPID_PUBLIC_KEY = env("VAPID_PUBLIC_KEY", default="")
 VAPID_CLAIMS_EMAIL = env("VAPID_CLAIMS_EMAIL", default="mailto:admin@example.com")
