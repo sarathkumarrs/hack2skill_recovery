@@ -1,0 +1,17 @@
+# Environments
+../venv/
+venv/
+*.pyc
+__pycache__/
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+
+# Secrets
+.env
+
+# OS / editor
+.DS_Store
+*.swp

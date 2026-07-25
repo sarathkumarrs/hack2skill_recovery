@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>{% block title %}Recovery Pulse{% endblock %}</title>
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6',
+              600: '#0d9488', 700: '#0f766e', 900: '#134e4a',
+            },
+          },
+        },
+      },
+    }
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-brand-50 text-slate-900 antialiased">
+  {% block content %}{% endblock %}
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
